@@ -1,7 +1,10 @@
 <template>
     <div class="bezierCurve-amap-container">
         <el-amap vid="amapDemo" :zoom="zoom" :center="center" class="amap-demo">
-            <el-amap-bezier-curve v-for="(line,index) in lines" :key="index" :events="line.events" :path="line.path"
+            <el-amap-bezier-curve v-for="(line,index) in line1" :key="`A-${index}`" :events="line.events" :path="line.path"
+                                  :stroke-color="line.strokeColor" :stroke-style="line.strokeStyle"
+                                  :stroke-opacity="line.strokeOpacity"></el-amap-bezier-curve>
+            <el-amap-bezier-curve v-for="(line,index) in line2" :key="`B-${index}`" :events="line.events" :path="line.path"
                                   :stroke-color="line.strokeColor" :stroke-style="line.strokeStyle"
                                   :stroke-opacity="line.strokeOpacity"></el-amap-bezier-curve>
         </el-amap>
@@ -20,7 +23,29 @@
             return {
                 zoom: 16,
                 center: [113.296241, 23.121194],
-                lines: [
+                line1: [
+                    {
+                        path: [
+                            [113.265398, 23.124983],//公园前地铁站D口
+                            [113.266241, 23.121174],//就是这样的喵Meow Cafe
+                            [113.266976, 23.120388],//越秀区少年宫(西门)
+                            [113.267409, 23.120269],//越秀区少年宫(东南门)
+                            [113.268802, 23.120488],//Breaktime cafe(北京路店)
+                            [113.269013, 23.121227],//垚燚1点点
+                            [113.268844, 23.124873],//千年古道遗址
+                            [113.268907, 23.123082],//真功夫(西湖路店)
+                            [113.267265, 23.122889],//光明广场(北门)
+                            [113.267473, 23.121427],//光明广场(西1门)
+                            [113.266241, 23.121174],//就是这样的喵Meow Cafe
+                        ],
+                        strokeDasharray: [10, 10],
+                        strokeColor: "#FF33FF", //线颜色
+                        strokeOpacity: 1, //线透明度
+                        strokeWeight: 3, //线宽
+                        strokeStyle: "solid" //线样式
+                    }
+                ],
+                line2: [
                     {
                         path: [
                             [113.295051, 23.123667],//东山口地铁站F口
@@ -60,12 +85,7 @@
                         strokeColor: "#FF33FF", //线颜色
                         strokeOpacity: 1, //线透明度
                         strokeWeight: 3, //线宽
-                        strokeStyle: "solid", //线样式
-//                        events: {
-//                            click: () => {
-//                                alert('click');
-//                            }
-//                        }
+                        strokeStyle: "solid" //线样式
                     }
                 ]
             }

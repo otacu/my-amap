@@ -1,9 +1,9 @@
 <template>
-    <div class="amap-page-container">
+    <div class="search-amap-container">
         <el-amap-search-box class="search-box" :search-option="searchOption" :on-search-result="onSearchResult"></el-amap-search-box>
         <el-amap vid="amapDemo" :center="center" :zoom="zoom" class="amap-demo">
-            <el-amap-marker v-for="marker in searchResultMarkers" :position="marker.position" :events="marker.events"></el-amap-marker>
-            <el-amap-info-window v-for="infoWindow in searchResultInfoWindows"
+            <el-amap-marker v-for="(marker,index) in searchResultMarkers" :key="`A-${index}`" :position="marker.position" :events="marker.events"></el-amap-marker>
+            <el-amap-info-window v-for="(infoWindow,index) in searchResultInfoWindows" :key="`B-${index}`"
                     :position="infoWindow.position"
                     :content="infoWindow.content"
                     :visible="infoWindow.visible"
@@ -24,7 +24,7 @@
         left: 20px;
     }
 
-    .amap-page-container {
+    .search-amap-container {
         position: relative;
     }
 
@@ -52,7 +52,7 @@
                 if (pois.length > 0) {
                     /*将搜索结果显示位点覆盖物*/
                     pois.forEach(poi => {
-                        console.log(poi);
+//                        console.log(poi);
                         lngSum += poi.lng;
                         latSum += poi.lat;
                         let marker = {

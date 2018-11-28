@@ -1,5 +1,5 @@
 <template>
-    <div class="amap-page-container">
+    <div class="transfer-amap-container">
         <el-amap :zoom="zoom" :center="center" class="amap-demo" :plugin="plugin">
         </el-amap>
         <div id="panel"></div>
@@ -7,8 +7,8 @@
 </template>
 
 <style>
-    .amap-page-container {
-        height: 500px;
+    .transfer-amap-container {
+        height: 5rem;
     }
 </style>
 <script>

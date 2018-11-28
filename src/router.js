@@ -6,7 +6,8 @@ import Marker from './views/Marker.vue'
 import Search from './views/Search.vue'
 import Drag from './views/Drag.vue'
 import Complete from './views/Complete.vue'
-import Transfer from './views/Transfer.vue'
+// import Transfer from './views/Transfer.vue'
+import BezierCurve from './views/BezierCurve.vue'
 
 Vue.use(Router)
 
@@ -39,10 +40,15 @@ export default new Router({
           name: 'Complete', //名称
           component: Complete //组件
       },
+      // {
+      //     path: '/transfer', //路径
+      //     name: 'Transfer', //名称
+      //     component: Transfer //组件
+      // },
       {
-          path: '/transfer', //路径
-          name: 'Transfer', //名称
-          component: Transfer //组件
+          path: '/bezierCurve', //路径
+          name: 'BezierCurve', //名称
+          component: BezierCurve //组件
       },
     {
       path: '/',

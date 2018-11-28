@@ -1,21 +1,21 @@
 <template>
     <div>
-        <draggable :list="spotList" class = "dragArea">
-            <div v-for="(element, index) in spotList" class="dragElement">
-                <div class="dragElementIndex">{{index+1}}</div>
-                <div class="dragElementContent">{{element.name}}</div>
+        <draggable :list="spotList" class = "drag-dragArea">
+            <div v-for="(element, index) in spotList" class="drag-dragElement">
+                <div class="drag-dragElementIndex">{{index+1}}</div>
+                <div class="drag-dragElementContent">{{element.name}}</div>
             </div>
         </draggable>
-        <div v-on:click="save()" class="saveButton">保存</div>
+        <div v-on:click="save()" class="drag-saveButton">保存</div>
     </div>
 </template>
 
 <style>
-    .dragArea {
+    .drag-dragArea {
         display: -webkit-box;
         border:0.2rem solid #ffad47;
     }
-    .dragElement {
+    .drag-dragElement {
         border:0.25rem solid #ffad47;
         -moz-border-radius: 0.5rem;
         -khtml-border-radius: 0.5rem;
@@ -25,17 +25,17 @@
         Height:4rem;
         Width:5rem;
     }
-    .dragElementIndex {
+    .drag-dragElementIndex {
         color: #ffffff;
         font-weight:bold;
         Height:1.5rem;
         line-height:1.5rem;
         background-color: #ffad47;
     }
-    .dragElementContent {
+    .drag-dragElementContent {
         line-height:2.5rem
     }
-    .saveButton {
+    .drag-saveButton {
         border:0.25rem solid #ffad47;
         background-color: #ffad47;
         -moz-border-radius: 0.5rem;

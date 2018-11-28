@@ -1,7 +1,7 @@
 <template>
-    <div class="amap-page-container">
+    <div class="marker-amap-container">
         <el-amap vid="amapDemo" :zoom="zoom" :center="center" class="amap-demo">
-            <el-amap-circle-marker v-for="marker in markers" :center="marker.center" :radius="marker.radius"
+            <el-amap-circle-marker v-for="(marker,index) in markers" :key="index" :center="marker.center" :radius="marker.radius"
                                    :fill-color="marker.fillColor" :fill-opacity="marker.fillOpacity"
                                    :events="marker.events"></el-amap-circle-marker>
             <el-amap-polyline :editable="polyline.editable" :path="polyline.path"></el-amap-polyline>
@@ -10,8 +10,8 @@
 </template>
 
 <style>
-    .amap-page-container {
-        height: 500px;
+    .marker-amap-container {
+        height: 10rem;
     }
 </style>
 <script>

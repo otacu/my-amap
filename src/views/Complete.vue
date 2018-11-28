@@ -1,29 +1,33 @@
 <template>
-    <div class="amap-page-container" @click="add($event)">
+    <div class="complete-amap-container" @click="add($event)">
         <el-amap-search-box class="search-box" :search-option="searchOption"
                             :on-search-result="onSearchResult"></el-amap-search-box>
         <el-amap vid="amap" :plugin="plugin" :center="center" :zoom="zoom">
-            <el-amap-marker v-for="marker in searchResultMarkers" :position="marker.position"
+            <el-amap-marker v-for="(marker,index) in searchResultMarkers" :key="`A-${index}`"
+                            :position="marker.position"
                             :events="marker.events"></el-amap-marker>
-            <el-amap-info-window v-for="infoWindow in infoWindows"
+            <el-amap-info-window v-for="(infoWindow,index) in infoWindows" :key="`B-${index}`"
                                  :position="infoWindow.position"
                                  :content="infoWindow.content"
                                  :visible="infoWindow.visible"
                                  :events="infoWindow.events">
             </el-amap-info-window>
-            <el-amap-circle-marker v-for="marker in spotMarkers" :center="marker.center" :radius="marker.radius"
+            <el-amap-circle-marker v-for="(marker,index) in spotMarkers" :key="`C-${index}`" :center="marker.center"
+                                   :radius="marker.radius"
                                    :fill-color="marker.fillColor" :fill-opacity="marker.fillOpacity"
                                    :events="marker.events"></el-amap-circle-marker>
             <el-amap-polyline :editable="polyline.editable" :path="polyline.path"></el-amap-polyline>
         </el-amap>
 
-        <draggable :list="spotList" class="dragArea">
-                <div v-for="(element, index) in spotList" class="dragElement">
-                        <div class="dragElementIndex">{{index + 1}}</div>
-                        <div class="dragElementContent">{{element.name}}</div>
-                        <div class="deleteButton" v-on:click="del(index)">×</div>
+        <div class="dragFrame">
+            <draggable :list="spotList" class="dragArea">
+                <div v-for="(element, index) in spotList" :key="`D-${index}`" class="dragElement">
+                    <div class="dragElementIndex">{{index + 1}}</div>
+                    <div class="dragElementContent">{{element.name}}</div>
+                    <div class="deleteButton" v-on:click="del(index)">×</div>
                 </div>
-        </draggable>
+            </draggable>
+        </div>
         <div v-on:click="save()" class="saveButton">保存</div>
     </div>
 </template>
@@ -43,10 +47,10 @@
                 lat: 0,
                 loaded: false,
                 poisArray: [],//搜索结果列表
-                transfer:{},
+                transfer: {},
                 plugin: [{
                     enableHighAccuracy: true,//是否使用高精度定位，默认:true
-                    timeout: 100,          //超过10秒后停止定位，默认：无穷大
+                    timeout: 1000,          //超过10秒后停止定位，默认：无穷大
                     maximumAge: 0,           //定位结果缓存0毫秒，默认：0
                     convert: true,           //自动偏移坐标，偏移后的坐标为高德坐标，默认：true
                     showButton: true,        //显示定位按钮，默认：true
@@ -61,10 +65,10 @@
                         init(o) {
                             // o 是高德地图定位插件实例
                             o.getCurrentPosition((status, result) => {
-                                var log = {};
-                                log.name = "定位结果";
-                                log.obj = result;
-                                console.log("%o", log);
+//                                var log = {};
+//                                log.name = "定位结果";
+//                                log.obj = result;
+//                                console.log("%o", log);
                                 if (result && result.position) {
                                     self.lng = result.position.lng;
                                     self.lat = result.position.lat;
@@ -94,7 +98,20 @@
         },
         methods: {
             save(){
-                alert(JSON.stringify(this.spotList));
+                this.axios.post('http://'+document.domain+':8088/saveRoutePoiList', {
+                    list: this.spotList
+                })
+                    .then((response) => {
+                        if (200 == response.data.status) {
+                            alert("成功");
+                        } else {
+                            console.log("错误信息：" + response.data.msg);
+                            alert("失败");
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
             },
             onSearchResult(pois) {
                 this.searchResultMarkers.splice(0, this.searchResultMarkers.length);
@@ -148,10 +165,10 @@
                     }
                     if (!hadThisSpot) {
                         this.spotList.push(poi);
-                        var log = {};
-                        log.name = "加入行程的地点";
-                        log.obj = poi;
-                        console.log("%o", log);
+//                        var log = {};
+//                        log.name = "加入行程的地点";
+//                        log.obj = poi;
+//                        console.log("%o", log);
                     }
                 }
             },
@@ -159,10 +176,15 @@
                 this.spotList.splice(index, 1);
             }
         },
-        mounted() {
-            this.$nextTick(function () {
-
-            });
+        mounted: function () {
+            /*初始化行程*/
+            this.axios.post('http://'+document.domain+':8088/getRoutePoiList', {})
+                .then((response) => {
+                    this.spotList = response.data.data;
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
         },
         watch: {
             /*监听行程的变化来更新覆盖物*/
@@ -200,39 +222,50 @@
 </script>
 
 <style>
-    .amap-page-container {
-        height: 35rem;
+    .complete-amap-container {
+        height: 20rem;
+        width: 100%;
     }
+
     .dragArea {
         /*子元素水平展示*/
         display: -webkit-box;
-        border: 0.2rem solid #ffad47;
-        Height: 6.7rem;
-        overflow: auto;
+        Height: 4.2rem;
     }
+
+    .dragFrame {
+        border: 0.1rem solid #ffad47;
+        width: 100%;
+        Height: 5rem;
+        overflow-x: scroll;
+    }
+
     .dragElement {
         position: relative;
-        border: 0.25rem solid #ffad47;
+        border: 0.17rem solid #ffad47;
         -moz-border-radius: 0.5rem;
         -khtml-border-radius: 0.5rem;
         -webkit-border-radius: 0.5rem;
         border-radius: 0.5rem;
-        margin: 0.11rem;
-        Height: 6rem;
-        Width: 8rem;
+        margin: 0.1rem;
+        Height: 3.7rem;
+        Width: 4rem;
     }
+
     .dragElementIndex {
         color: #ffffff;
         font-weight: bold;
-        Height: 1.5rem;
-        line-height: 1.5rem;
+        Height: 1rem;
+        line-height: 1rem;
         background-color: #ffad47;
     }
+
     .dragElementContent {
-        line-height: 1.8rem;
-        margin: 0.6rem auto;
+        line-height: 1rem;
+        margin: 0.3rem auto;
         font-size: 0.5rem;
     }
+
     .saveButton {
         border: 0.25rem solid #ffad47;
         background-color: #ffad47;
@@ -240,14 +273,16 @@
         -khtml-border-radius: 0.5rem;
         -webkit-border-radius: 0.5rem;
         border-radius: 0.5rem;
-        line-height: 2.8rem;
-        Height: 2.7rem;
-        Width: 7rem;
-        margin: 0.2rem auto;
-        font-size: 2rem;
+        line-height: 1.8rem;
+        Height: 1.7rem;
+        Width: 3.7rem;
+        margin: 0.1rem auto;
+        font-size: 1rem;
         color: #ffffff;
         font-weight: 500;
+        cursor: pointer;
     }
+
     .addButton {
         border: 0.25rem solid #ffad47;
         background-color: #ffad47;
@@ -263,26 +298,30 @@
         color: #ffffff;
         text-align: center;
     }
+
     .search-box {
         position: absolute;
-        top: 3.5rem;
-        left: 1rem;
+        top: 0rem;
+        left: 0rem;
         Width: 1rem;
     }
+
     .deleteButton {
-        position: absolute;top: 0;right: 0;
+        position: absolute;
+        top: 0;
+        right: 0;
         border: 0.0rem solid #ffad47;
-        height: 1.5rem;
-        width: 1.5rem;
-        line-height: 1.5rem;
-        font-size: 2rem;
+        height: 1rem;
+        width: 1rem;
+        line-height: 1rem;
+        font-size: 1rem;
         color: #ffffff;
         -moz-border-radius: 1rem;
         -khtml-border-radius: 1rem;
         -webkit-border-radius: 1rem;
         border-radius: 1rem;
         background-color: #ffad47;
-        cursor:pointer;
+        cursor: pointer;
         margin-top: -0.1rem;
     }
 </style>

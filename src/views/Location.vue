@@ -1,5 +1,5 @@
 <template>
-    <div class="amap-page-container">
+    <div class="location-amap-container">
         <el-amap vid="amap" :plugin="plugin" :center="center">
         </el-amap>
 
@@ -15,8 +15,8 @@
 </template>
 
 <style>
-    .amap-page-container {
-        height: 500px;
+    .location-amap-container {
+        height: 10rem;
     }
 </style>
 
@@ -80,10 +80,10 @@
                     }
                 })
                     .then(function (response) {
-                        console.log(response['data'][0]['body']['pois'])
+//                        console.log(response['data'][0]['body']['pois'])
                     })
                     .catch(function (error) {
-                        console.log(error);
+//                        console.log(error);
                     });
 
             }

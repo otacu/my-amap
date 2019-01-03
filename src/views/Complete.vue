@@ -1,8 +1,8 @@
 <template>
-    <div class="complete-amap-container" @click="add($event)">
+    <div class="complete-amap-container" @click="addToRoute($event)">
         <el-amap-search-box class="search-box" :search-option="searchOption"
                             :on-search-result="onSearchResult"></el-amap-search-box>
-        <el-amap vid="amap" :plugin="plugin" :center="center" :zoom="zoom">
+        <el-amap vid="amap" :plugin="plugin" :center="center" :zoom="zoom" :amap-manager="amapManager" :events="events">
             <el-amap-marker v-for="(marker,index) in searchResultMarkers" :key="`A-${index}`"
                             :position="marker.position"
                             :events="marker.events"></el-amap-marker>
@@ -24,16 +24,18 @@
                 <div v-for="(element, index) in spotList" :key="`D-${index}`" class="dragElement">
                     <div class="dragElementIndex">{{index + 1}}</div>
                     <div class="dragElementContent">{{element.name}}</div>
-                    <div class="deleteButton" v-on:click="del(index)">×</div>
+                    <div class="deleteButton" v-on:click="delFromRoute(index)">×</div>
                 </div>
             </draggable>
         </div>
-        <div v-on:click="save()" class="saveButton">保存</div>
+        <div v-on:click="saveRoute()" class="saveButton">保存</div>
     </div>
 </template>
 
 <script>
     import draggable from "vuedraggable";
+    import {AMapManager} from "vue-amap"
+    let amapManager = new AMapManager();
     export default {
         components: {
             draggable
@@ -46,8 +48,29 @@
                 lng: 0,
                 lat: 0,
                 loaded: false,
-                poisArray: [],//搜索结果列表
-                transfer: {},
+                searchResultPoiArray: [],//搜索结果列表
+                clickedHotSpot: {},
+                amapManager,
+                isHotspot: true,//使用热点
+                events: {
+                    init(o) {
+                        AMap.event.addListener(amapManager.getMap(), 'hotspotclick', function (result) { //添加点击事件,传入对象名，事件名，回调函数
+                            let placeSearch = new AMap.PlaceSearch({
+                                city: this.city, // 兴趣点城市
+                                citylimit: true  //是否强制限制在设置的城市内搜索
+                            });
+                            //详情查询
+                            placeSearch.getDetails(result.id, function (status, result) {
+                                if (status === 'complete' && result.info === 'OK') {
+                                    let poi = result.poiList.pois[0];
+                                    poi["lng"] = poi.location.lng;
+                                    poi["lat"] = poi.location.lat;
+                                    self.addInfoWindowOfHotSpot(poi);
+                                }
+                            });
+                        })
+                    }
+                },
                 plugin: [{
                     enableHighAccuracy: true,//是否使用高精度定位，默认:true
                     timeout: 1000,          //超过10秒后停止定位，默认：无穷大
@@ -97,8 +120,8 @@
             }
         },
         methods: {
-            save(){
-                this.axios.post('http://'+document.domain+':8088/saveRoutePoiList', {
+            saveRoute(){
+                this.axios.post('http://' + document.domain + ':8088/saveRoutePoiList', {
                     list: this.spotList
                 })
                     .then((response) => {
@@ -119,7 +142,7 @@
                 let lngSum = 0;
                 if (pois.length > 0) {
                     /*将搜索结果显示位点覆盖物*/
-                    this.poisArray = [].concat(pois);
+                    this.searchResultPoiArray = [].concat(pois);
                     pois.forEach((poi, idx) => {
                         //console.log(poi);
                         lngSum += poi.lng;
@@ -129,14 +152,7 @@
                             events: {
                                 /*点击覆盖物打开信息窗口*/
                                 click: () => {
-                                    let addButton = '<div data-idx="' + idx + '" class="addButton">加入行程</div>';
-                                    let infoWindow = {
-                                        position: [poi.lng, poi.lat],
-                                        content: '<div>名称：' + poi.name + '</div><div>地址：' + poi.address + '</div>' + addButton,
-                                        events: {},
-                                        visible: true
-                                    };
-                                    this.infoWindows.push(infoWindow);
+                                    this.addInfoWindowOfSearchResult(poi, idx);
                                 }
                             }
                         };
@@ -150,11 +166,17 @@
                     this.center = [center.lng, center.lat];
                 }
             },
-            add(event){
+            addToRoute(event){
                 let el = event.target;
-                if (el.className == 'addButton') {
-                    let index = el.getAttribute('data-idx');
-                    let poi = this.poisArray[index];
+                if (el.className.indexOf("addButton") != -1) {
+                    let poi;
+                    if (el.className.indexOf("addButtonOfSearchResult") != -1) {
+                        let index = el.getAttribute('data-idx');
+                        poi = this.searchResultPoiArray[index];
+                    }
+                    else if (el.className.indexOf("addButtonOfHotSpot") != -1) {
+                        poi = this.clickedHotSpot;
+                    }
                     /*行程里已经有的就不显示添加按钮*/
                     let hadThisSpot = false;
                     for (let i in this.spotList) {
@@ -172,19 +194,52 @@
                     }
                 }
             },
-            del(index){
+            delFromRoute(index){
                 this.spotList.splice(index, 1);
+            },
+            initRoute(){
+                /*初始化行程*/
+                this.axios.post('http://' + document.domain + ':8088/getRoutePoiList', {})
+                    .then((response) => {
+                        this.spotList = response.data.data;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            addInfoWindow(poi){
+                let infoWindow = {
+                    position: [poi.lng, poi.lat],
+                    content: '<div>名称：' + poi.name + '</div><div>地址：' + poi.address + '</div>',
+                    events: {},
+                    visible: true
+                };
+                this.infoWindows.push(infoWindow);
+            },
+            addInfoWindowOfSearchResult(poi, idx){
+                let addButton = '<div data-idx="' + idx + '" class="addButton addButtonOfSearchResult">加入行程</div>';
+                let infoWindow = {
+                    position: [poi.lng, poi.lat],
+                    content: '<div>名称：' + poi.name + '</div><div>地址：' + poi.address + '</div>' + addButton,
+                    events: {},
+                    visible: true
+                };
+                this.infoWindows.push(infoWindow);
+            },
+            addInfoWindowOfHotSpot(poi){
+                let addButton = '<div class="addButton addButtonOfHotSpot">加入行程</div>';
+                let infoWindow = {
+                    position: [poi.lng, poi.lat],
+                    content: '<div>名称：' + poi.name + '</div><div>地址：' + poi.address + '</div>' + addButton,
+                    events: {},
+                    visible: true
+                };
+                this.infoWindows.push(infoWindow);
+                this.clickedHotSpot = poi;
             }
         },
         mounted: function () {
-            /*初始化行程*/
-            this.axios.post('http://'+document.domain+':8088/getRoutePoiList', {})
-                .then((response) => {
-                    this.spotList = response.data.data;
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
+            this.initRoute();
         },
         watch: {
             /*监听行程的变化来更新覆盖物*/
@@ -201,13 +256,7 @@
                         events: {
                             /*点击覆盖物打开信息窗口*/
                             click: () => {
-                                let infoWindow = {
-                                    position: [spot.lng, spot.lat],
-                                    content: '<div>名称：' + spot.name + '</div><div>地址：' + spot.address + '</div>',
-                                    events: {},
-                                    visible: true
-                                };
-                                this.infoWindows.push(infoWindow);
+                                this.addInfoWindow(spot);
                             }
                         }
                     };
@@ -297,6 +346,7 @@
         font-size: 0.5rem;
         color: #ffffff;
         text-align: center;
+        cursor: pointer;
     }
 
     .search-box {
